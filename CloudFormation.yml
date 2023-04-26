@@ -1,0 +1,43 @@
+Parameters:
+  trainingSSHkey:
+    Type: AWS::EC2::KeyPair::KeyName
+Resources:
+  Ec2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      SecurityGroups:
+        - !Ref trainingSG
+      KeyName: !Ref trainingSSHkey
+      ImageId: ami-040d7e4a2b9473eeb
+      InstanceType: t2.micro
+      UserData: 
+        Fn::Base64:
+          !Sub |
+            #!/bin/sh
+            ansible-playbook /home/ubuntu/playbook.yml
+  trainingSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'SG for training resources'
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: '-1'
+          ToPort: '-1'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'          
+  NewVolume:
+    Type: AWS::EC2::Volume
+    Properties: 
+      Size: 100
+      Encrypted: true
+      AvailabilityZone: !GetAtt Ec2Instance.AvailabilityZone
+      Tags:
+        - Key: TrainingTag
+          Value: ExampleValue
+    DeletionPolicy: Snapshot  

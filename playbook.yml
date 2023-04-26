@@ -1,0 +1,38 @@
+---
+- name: Script to customize VM for KodeKloud
+  hosts: localhost
+  become: yes
+  connection: local
+  tasks:
+
+  - name: Create the learner user
+    user:
+        name: learner
+        create_home: yes
+        home: /home/learner
+        shell: /bin/bash
+#        password: "{{ 'KodeKloud' | password_hash('sha512') }}"
+
+  - name: add learner to the sudoers file
+    copy:
+        dest: /etc/sudoers.d/learner
+        content: "learner ALL=(ALL) NOPASSWD: ALL"
+
+  - name: Install nginx server
+    apt:
+      name: "{{ item }}"
+      state: latest
+    loop:
+      - nginx
+      - bash-completion
+
+  - name: Add a welcome banner to the /etc/motd
+    copy:
+      dest: /etc/motd
+      content: "Welcome to the KodeKloud Lab Environment"
+
+  - name: Enable the nginx service
+    service:
+      name: nginx
+      state: started
+      enabled: true
